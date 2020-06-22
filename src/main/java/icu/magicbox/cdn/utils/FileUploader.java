@@ -10,20 +10,23 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
+import java.security.NoSuchAlgorithmException;
+
+
 public class FileUploader {
 
-
-    public static void main(String args[]) {
-        String url = args[0];
-        File file = new File(args[1]);
-        String token = args[2];
-        create(url, file, token);
-        //update(url, file, token);
-    }
+    private static final char[] hexCode = "0123456789ABCDEF".toCharArray();
 
 
     /**
@@ -42,6 +45,7 @@ public class FileUploader {
         HttpURLConnection conn = null;
         try {
             URL realUrl = new URL(url);
+            System.out.println(url);
             conn = (HttpURLConnection) realUrl.openConnection();
             conn.setConnectTimeout(120000);
             conn.setReadTimeout(120000);
@@ -50,10 +54,10 @@ public class FileUploader {
             conn.setDoInput(true); // 需要输入
             conn.setUseCaches(false); // 不允许缓存
             conn.setRequestMethod("PUT"); // 设置PUT方式连接
-
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setRequestProperty("Authorization", "token " + token);
             conn.setRequestProperty("User-Agent", "Github File Uploader App");
+
             conn.connect();
             // 传输数据
             DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
@@ -78,7 +82,6 @@ public class FileUploader {
             dos.writeBytes("\"}");
             dos.flush();
             dos.close();
-
             in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             String line;
             while ((line = in.readLine()) != null) {
@@ -87,16 +90,18 @@ public class FileUploader {
         } catch (Exception e) {
             System.out.println("发送PUT请求出现异常！");
             e.printStackTrace();
+            conn.disconnect();
             return false;
         } finally {
             try {
                 in.close();
+                conn.disconnect();
             } catch (Exception e2) {
             }
         }
         long end = System.currentTimeMillis();
         System.out.printf("上传结束，耗时 %ds\n", (end - begin) / 1000);
-        //result.toString()
+//        result.toString();
         return true;
     }
 
@@ -251,14 +256,13 @@ public class FileUploader {
     }
 
 
-    private MultipartFile getMultipartFile(String picPath){
+    private MultipartFile getMultipartFile(String picPath) {
         FileItem fileItem = createFileItem(picPath);
         MultipartFile mfile = new CommonsMultipartFile(fileItem);
         return mfile;
     }
 
-    private static FileItem createFileItem(String filePath)
-    {
+    private static FileItem createFileItem(String filePath) {
         FileItemFactory factory = new DiskFileItemFactory(16, null);
         String textFieldName = "textField";
         int num = filePath.lastIndexOf(".");
@@ -268,25 +272,52 @@ public class FileUploader {
         File newfile = new File(filePath);
         int bytesRead = 0;
         byte[] buffer = new byte[8192];
-        try
-        {
+        try {
             FileInputStream fis = new FileInputStream(newfile);
             OutputStream os = item.getOutputStream();
             while ((bytesRead = fis.read(buffer, 0, 8192))
-                    != -1)
-            {
+                    != -1) {
                 os.write(buffer, 0, bytesRead);
             }
             os.close();
             fis.close();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return item;
     }
 
+    /**
+     * 计算文件 MD5
+     *
+     * @param file
+     * @return 返回文件的md5字符串，如果计算过程中任务的状态变为取消或暂停，返回null， 如果有其他异常，返回空字符串
+     */
+    public static String calcMD5(File file) {
+        try (InputStream stream = Files.newInputStream(file.toPath(), StandardOpenOption.READ)) {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = stream.read(buf)) > 0) {
+                digest.update(buf, 0, len);
+            }
+            return toHexString(digest.digest());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
 
+    public static String toHexString(byte[] data) {
+        StringBuilder r = new StringBuilder(data.length * 2);
+        for (byte b : data) {
+            r.append(hexCode[(b >> 4) & 0xF]);
+            r.append(hexCode[(b & 0xF)]);
+        }
+        return r.toString();
+    }
 
 }

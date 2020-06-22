@@ -1,2 +1,28 @@
 server:
   port: 8080
+
+github:
+  user: wangchuanli001
+  repo: FileHub01
+  token: 589a882800fac67f924deceaa508de148c847370
+
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://47.102.210.154:3306/github?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true
+    username: root
+    password: Wangabc123@
+
+  jpa:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+        format_sql: true
+    show-sql: false
+  mvc:
+    static-path-pattern: /**
+  resources:
+    static-locations: classpath:/resources/,classpath:/static/,classpath:/
