@@ -24,7 +24,7 @@ layui.use(['upload', 'form', 'element', 'layer', 'flow'], function () {
         elem: '#upimg' //绑定元素
         //选择的时候触发
         , choose: function (obj) { //obj参数包含的信息，跟 choose回调完全一致，可参见上文。
-            this.url = '/upload';
+            this.url = 'http://localhost:8080/github/contents/api/upload';
             this.field = 'pic';
             console.log(this);
             $(".progress").hide();
@@ -142,7 +142,7 @@ document.addEventListener('paste', function (event) {
                     var formData = new FormData();
                     formData.append('pic', images[0]);
                     $.ajax({
-                        url: '/upload',
+                        url: 'http://localhost:8080/upload',
                         data: formData,
                         type: 'post',
                         processData: false,
