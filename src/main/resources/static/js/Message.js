@@ -1,6 +1,6 @@
 /*!
  * Message.js v3.2.2
- * by 吴长新
+ *
  */
 !function (n) {
     var t = {};
